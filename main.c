@@ -51,7 +51,7 @@ void inputCourses()
 {
     FILE *fp = NULL;
     fp = fopen(COURSE_FILE_PATH,"w+");
-    printf("共须录入16门课程\n");
+    printf("共须录入%d门课程\n",TOTAL_COURSE_NUM);
     for(int i = 0; i < TOTAL_COURSE_NUM;i++)
     {
         printf("%d. ",i+1);

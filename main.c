@@ -137,11 +137,28 @@ execute_result deleteNode(node* headNode,node* LNode)
     if(prevNode == NULL)
         return DELETE_FAILURE;
     prevNode->next = LNode->next;
+    if(LNode->data.score_courses)
+    {
+        free(LNode->data.score_courses);
+        LNode->data.score_courses = NULL;
+    }
     free(LNode);
     LNode = NULL;
     return DELETE_SUCCESS;
 }
 
+// 释放整个链表
+void freeList(node* headNode)
+{
+    node* LNode = headNode->next;
+    while(LNode != NULL)
+    {
+        deleteNode(headNode,LNode);
+        LNode = LNode->next;
+    }
+    free(headNode);
+    headNode = NULL;
+}
 
 // 打印学生信息
 void printData(info stuData)
@@ -407,6 +424,7 @@ void searchInfo(node* List)
         return;
     }
     printList(resultList);
+    freeList(List);
 }
 
 // 读取学生信息文件

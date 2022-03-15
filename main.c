@@ -140,11 +140,68 @@ execute_result deleteNode(node* headNode,node* LNode)
     if(LNode->data.score_courses)
     {
         free(LNode->data.score_courses);
-        LNode->data.score_courses = NULL;
     }
     free(LNode);
     LNode = NULL;
     return DELETE_SUCCESS;
+}
+
+// 根据比较依据进行比较
+bool compareNode(node* LNode,info compareInfo,int searchInfo)
+{
+    if(SEARCH_BY_NUMBER & searchInfo) {
+        if(strcmp(compareInfo.number,LNode->data.number) != 0)
+            return false;
+    }
+    if(SEARCH_BY_NAME & searchInfo) {
+        if(strcmp(compareInfo.name,LNode->data.name) != 0)
+            return false;
+    }
+    return true;
+}
+
+node* searchNode(node* headNode,info compareInfo,int searchInfo)
+{
+    node* LNode = headNode->next;
+
+    // 循环查找
+    while(LNode != NULL)
+    {
+        if(compareNode(LNode,compareInfo,searchInfo))
+        {
+            return LNode;
+        }
+        LNode = LNode->next;
+    }
+    return NULL;
+}
+
+execute_result searchNodeList(node* headNode,node* resultList,info compareInfo,int searchInfo,search_type searchType)
+{
+    node* LNode = headNode->next;
+    int num_result = 0;
+
+    // 循环查找
+    while(LNode != NULL)
+    {
+        if(compareNode(LNode,compareInfo,searchInfo))
+        {
+            node* resultNode = createNode();
+            resultNode->data = LNode->data;
+            insertNode(resultList,resultNode);
+            if(searchType == SEARCH_SINGLE_NODE)
+                return SEARCH_SUCCESS;
+            num_result++;
+        }
+        LNode = LNode->next;
+    }
+    if(num_result == 0)
+    {
+        resultList = NULL;
+        return SEARCH_FAILURE;
+    }
+    resultList->data.num_courses = num_result;
+    return SEARCH_SUCCESS; // 返回结果集
 }
 
 // 释放整个链表
@@ -240,8 +297,7 @@ void write_course_score(info* stuData)
     int num_courses = stuData->num_courses;
     if(num_courses <= 0)
         return;
-    int select_courses = stuData->select_courses;
-    int num = 0;
+    int select_courses = stuData->select_courses,num = 0;
     for(int i = 0;i < TOTAL_COURSE_NUM;i++)
     {
         if(select_courses & 1)
@@ -251,64 +307,6 @@ void write_course_score(info* stuData)
         }
         select_courses = select_courses >> 1;
     }
-}
-
-// 根据比较依据进行比较
-bool compareNode(node* LNode,info compareInfo,int searchInfo)
-{
-    if(SEARCH_BY_NUMBER & searchInfo) {
-        if(strcmp(compareInfo.number,LNode->data.number) != 0)
-            return false;
-    }
-    if(SEARCH_BY_NAME & searchInfo) {
-        if(strcmp(compareInfo.name,LNode->data.name) != 0)
-            return false;
-    }
-    return true;
-}
-
-node* searchNode(node* headNode,info compareInfo,int searchInfo)
-{
-    node* LNode = headNode->next;
-
-    // 循环查找
-    while(LNode != NULL)
-    {
-        if(compareNode(LNode,compareInfo,searchInfo))
-        {
-            return LNode;
-        }
-        LNode = LNode->next;
-    }
-    return NULL;
-}
-
-execute_result searchNodeList(node* headNode,node* resultList,info compareInfo,int searchInfo,search_type searchType)
-{
-    node* LNode = headNode->next;
-    int num_result = 0;
-
-    // 循环查找
-    while(LNode != NULL)
-    {
-        if(compareNode(LNode,compareInfo,searchInfo))
-        {
-            node* resultNode = createNode();
-            resultNode->data = LNode->data;
-            insertNode(resultList,resultNode);
-            if(searchType == SEARCH_SINGLE_NODE)
-                return SEARCH_SUCCESS;
-            num_result++;
-        }
-        LNode = LNode->next;
-    }
-    if(num_result == 0)
-    {
-        resultList = NULL;
-        return SEARCH_FAILURE;
-    }
-    resultList->data.num_courses = num_result;
-    return SEARCH_SUCCESS; // 返回结果集
 }
 
 info readInfo(read_type type)
@@ -324,15 +322,18 @@ info readInfo(read_type type)
     printf("修改选课信息\n");
     printf("输入选课数目: ");
     scanf("%d",&newData.num_courses);
-    if(newData.num_courses == 0)
+    if(newData.num_courses > TOTAL_COURSE_NUM)
     {
-        if(newData.score_courses != NULL)
-        {
-            free(newData.score_courses);
-            newData.score_courses = NULL;
-        }
+        printf("超过最大课程数,选课失败\n");
         return newData;
     }
+
+    if(newData.num_courses == 0)
+    {
+        printf("未进行选课\n");
+        return newData;
+    }
+
     newData.select_courses = selectCourse(newData.num_courses);
     newData.score_courses = (int*)calloc(newData.num_courses,sizeof(int));
     write_course_score(&newData);
